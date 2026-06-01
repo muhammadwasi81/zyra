@@ -1,67 +1,55 @@
 ###############################################################################
 # Render Blueprint — Counselor Student Action Center
 #
-# Deploys two services from this monorepo:
-#   1. counselor-action-center-api   → Node.js web service  (port auto-assigned)
-#   2. counselor-action-center-web   → React static site     (global CDN)
+# Two services from this monorepo:
+#   1. counselor-action-center-api  → Node.js web service  (env: node)
+#   2. counselor-action-center-web  → React static site    (env: static)
 #
-# Each service uses `rootDir` to scope its build to its own subdirectory.
-# The two services reference each other's URLs via `fromService` so CORS and
-# the frontend's API base URL are configured automatically.
+# fromService wires CORS origin and the frontend API base URL automatically.
 ###############################################################################
 
 services:
 
-  # ── Backend API (Node.js Web Service) ──────────────────────────────────────
+  # ── Backend API (Node.js) ──────────────────────────────────────────────────
   - type: web
     name: counselor-action-center-api
-    runtime: node
+    env: node
     plan: free
     region: oregon
     rootDir: counselor-action-center/backend
 
-    # Install deps then compile TypeScript → dist/
     buildCommand: npm install && npm run build
-
-    # Run the compiled output (not tsx, which is a dev-only runner)
     startCommand: node dist/index.js
-
-    # Render's health check pings this path to decide if the service is up
     healthCheckPath: /health
 
     envVars:
       - key: NODE_ENV
         value: production
 
-      # Render injects PORT automatically; this default is never used in prod
-      # but keeps the value visible in the dashboard for clarity
       - key: PORT
         value: 10000
 
-      # Allow requests from the frontend's Render URL (injected automatically)
+      # Auto-filled with the static site's https:// URL for CORS
       - key: FRONTEND_ORIGIN
         fromService:
-          type: static
+          type: web
           name: counselor-action-center-web
           property: hostWithProtocol
 
 
   # ── Frontend Static Site (React / Vite) ────────────────────────────────────
-  - type: static
+  - type: web
     name: counselor-action-center-web
+    env: static
     plan: free
-    region: oregon
     rootDir: counselor-action-center/frontend
 
-    # Install deps then run tsc + vite build
     buildCommand: npm install && npm run build
-
-    # Vite outputs to dist/ relative to rootDir
-    staticPublishPath: ./dist
+    staticPublishPath: dist
 
     envVars:
-      # VITE_ prefix is required for Vite to expose the value to the browser bundle.
-      # The value is baked in at build time — not available at runtime.
+      # Baked into the JS bundle at build time by Vite.
+      # Auto-filled with the backend's https:// URL.
       - key: VITE_API_URL
         fromService:
           type: web
@@ -69,8 +57,8 @@ services:
           property: hostWithProtocol
 
     headers:
-      # Prevent stale HTML — JS/CSS assets are fingerprinted by Vite so they
-      # can be cached indefinitely; only the HTML shell needs revalidation
+      # HTML shell must revalidate — JS/CSS assets are content-hashed by Vite
+      # so they can be cached indefinitely
       - path: /index.html
         name: Cache-Control
         value: no-cache, no-store, must-revalidate
@@ -79,8 +67,7 @@ services:
         value: public, max-age=31536000, immutable
 
     routes:
-      # SPA fallback — send all non-asset paths to index.html so React Router
-      # (or in our case, the in-app student switcher) handles them client-side
+      # SPA fallback: all non-asset paths serve index.html
       - type: rewrite
         source: /*
         destination: /index.html
