@@ -1,8 +1,10 @@
 import { ActionCenterData, Task, TaskStatus } from "../types";
 
-// In dev, BASE_URL is "" and the Vite proxy forwards /students and /tasks to localhost:3001.
-// In production (Render), VITE_API_URL is the backend's full URL, e.g. https://counselor-action-center-api.onrender.com
-const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+// In dev: VITE_API_URL is unset → raw = "" → Vite proxy handles /students and /tasks.
+// In production: Render sets VITE_API_URL to the bare hostname via fromService.host
+// (e.g. "counselor-action-center-api.onrender.com"). Prepend https:// if no scheme.
+const raw = import.meta.env.VITE_API_URL ?? "";
+const BASE_URL = raw && !raw.startsWith("http") ? `https://${raw}` : raw;
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {

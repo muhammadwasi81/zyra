@@ -5,7 +5,8 @@
 #   1. counselor-action-center-api  → Node.js web service  (env: node)
 #   2. counselor-action-center-web  → React static site    (env: static)
 #
-# fromService wires CORS origin and the frontend API base URL automatically.
+# fromService.property uses "host" (bare hostname, no protocol).
+# Both services prepend "https://" in code when the value has no scheme.
 ###############################################################################
 
 services:
@@ -29,12 +30,12 @@ services:
       - key: PORT
         value: 10000
 
-      # Auto-filled with the static site's https:// URL for CORS
+      # Render provides the bare hostname; app.ts prepends https:// if absent
       - key: FRONTEND_ORIGIN
         fromService:
           type: web
           name: counselor-action-center-web
-          property: hostWithProtocol
+          property: host
 
 
   # ── Frontend Static Site (React / Vite) ────────────────────────────────────
@@ -48,17 +49,14 @@ services:
     staticPublishPath: dist
 
     envVars:
-      # Baked into the JS bundle at build time by Vite.
-      # Auto-filled with the backend's https:// URL.
+      # Render provides the bare hostname; api/client.ts prepends https:// if absent
       - key: VITE_API_URL
         fromService:
           type: web
           name: counselor-action-center-api
-          property: hostWithProtocol
+          property: host
 
     headers:
-      # HTML shell must revalidate — JS/CSS assets are content-hashed by Vite
-      # so they can be cached indefinitely
       - path: /index.html
         name: Cache-Control
         value: no-cache, no-store, must-revalidate
@@ -67,7 +65,6 @@ services:
         value: public, max-age=31536000, immutable
 
     routes:
-      # SPA fallback: all non-asset paths serve index.html
       - type: rewrite
         source: /*
         destination: /index.html

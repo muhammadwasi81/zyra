@@ -10,7 +10,10 @@ import { notFound } from "./middleware/notFound";
 
 dotenv.config();
 
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+// Render's fromService.host gives a bare hostname with no scheme.
+// Prepend https:// when the value has no protocol prefix.
+const rawOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+const FRONTEND_ORIGIN = rawOrigin.startsWith("http") ? rawOrigin : `https://${rawOrigin}`;
 
 export const app = express();
 
