@@ -19,7 +19,9 @@ services:
     region: oregon
     rootDir: counselor-action-center/backend
 
-    buildCommand: npm install && npm run build
+    # --include=dev ensures TypeScript (in devDependencies) is installed even
+    # when NODE_ENV=production is set in envVars below.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: node dist/index.js
     healthCheckPath: /health
 
@@ -44,7 +46,8 @@ services:
     env: static
     rootDir: counselor-action-center/frontend
 
-    buildCommand: npm install && npm run build
+    # Same reason: vite and typescript are devDependencies
+    buildCommand: npm install --include=dev && npm run build
     staticPublishPath: dist
 
     envVars:
