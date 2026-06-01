@@ -42,7 +42,6 @@ services:
   - type: web
     name: counselor-action-center-web
     env: static
-    plan: free
     rootDir: counselor-action-center/frontend
 
     buildCommand: npm install && npm run build
