@@ -6,6 +6,9 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  console.error(`[Error] ${err.message}`);
-  res.status(500).json({ error: "Internal server error" });
+  console.error(`[Error] [${req.id ?? "no-id"}] ${err.message}`);
+  res.status(500).json({
+    error: "Internal server error",
+    requestId: req.id,
+  });
 }
