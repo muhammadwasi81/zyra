@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #f4f5f7;
+    --color-surface: #ffffff;
+    --color-border: #e5e7eb;
+    --color-accent: #3b5bdb;
+    --color-critical: #e03131;
+    --color-high: #f76707;
+    --color-medium: #2f9e44;
+    --color-low: #868e96;
+    --color-text: #1a1b1e;
+    --color-muted: #495057;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .font-mono {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .stat-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  }
+
+  .card-hover {
+    @apply transition-shadow duration-200 hover:shadow-md;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg
+           hover:bg-indigo-700 active:bg-indigo-800 transition-colors duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply px-3 py-1.5 text-xs font-medium text-indigo-600 border border-indigo-200
+           rounded-lg hover:bg-indigo-50 active:bg-indigo-100
+           disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150;
+  }
+}
