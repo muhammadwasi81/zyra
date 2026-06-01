@@ -4,6 +4,54 @@ This repository contains the submission for a two-part software engineering asse
 
 ---
 
+## Deployment (Render.com)
+
+This project deploys to [Render.com](https://render.com) via a **Blueprint** (`render.yaml` at the repo root). The Blueprint defines both services — the Node.js API and the React static site — so a single click or `git push` spins up the entire stack.
+
+### How it works
+
+```
+render.yaml
+├── counselor-action-center-api  (Web Service — Node.js)
+│   rootDir: counselor-action-center/backend
+│   build:   npm install && npm run build   (tsc → dist/)
+│   start:   node dist/index.js
+│   env:     NODE_ENV=production
+│             FRONTEND_ORIGIN ← auto-filled from counselor-action-center-web URL
+│
+└── counselor-action-center-web  (Static Site — Vite/React)
+    rootDir: counselor-action-center/frontend
+    build:   npm install && npm run build   (vite build → dist/)
+    publish: ./dist
+    env:     VITE_API_URL ← auto-filled from counselor-action-center-api URL
+```
+
+`fromService` wires the two services together automatically:
+- The backend receives the frontend's URL as `FRONTEND_ORIGIN` for CORS.
+- The frontend receives the backend's URL as `VITE_API_URL` (baked into the JS bundle at build time via Vite).
+
+### Deploy steps
+
+1. Fork / push this repo to GitHub (already at https://github.com/muhammadwasi81/zyra).
+2. In the [Render Dashboard](https://dashboard.render.com), click **New → Blueprint**.
+3. Connect the GitHub repo — Render auto-detects `render.yaml`.
+4. Click **Apply**. Both services build and deploy automatically.
+
+No manual environment variable configuration is needed — `fromService` handles cross-service wiring.
+
+> **Free tier note:** Render's free web services spin down after 15 minutes of inactivity. The first request after a cold start takes ~30 seconds. The static site is always-on (CDN-served).
+
+### Local vs Production API routing
+
+| Environment | How frontend reaches backend |
+|-------------|------------------------------|
+| Dev | `VITE_API_URL` is unset → `BASE_URL = ""` → Vite proxy forwards `/students`, `/tasks` to `localhost:3001` |
+| Production | `VITE_API_URL = "https://counselor-action-center-api.onrender.com"` → requests go directly to the deployed API |
+
+No code change is needed between environments.
+
+---
+
 ## Repository Structure
 
 ```
