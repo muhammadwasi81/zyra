@@ -10,15 +10,45 @@ import { notFound } from "./middleware/notFound";
 
 dotenv.config();
 
-// Render's fromService.host gives a bare hostname with no scheme.
-// Prepend https:// when the value has no protocol prefix.
-const rawOrigin = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
-const FRONTEND_ORIGIN = rawOrigin.startsWith("http") ? rawOrigin : `https://${rawOrigin}`;
+// Build the list of allowed CORS origins.
+// 1. FRONTEND_ORIGIN env var (Render injects a bare hostname via fromService.host,
+//    so we prepend https:// when there is no scheme).
+// 2. localhost for local development.
+// 3. Any *.onrender.com origin as a safety net in case fromService is not resolved.
+function buildAllowedOrigins(): string[] {
+  const origins = ["http://localhost:5173"];
+
+  const raw = process.env.FRONTEND_ORIGIN;
+  if (raw) {
+    origins.push(raw.startsWith("http") ? raw : `https://${raw}`);
+  }
+
+  return origins;
+}
+
+const ALLOWED_ORIGINS = buildAllowedOrigins();
 
 export const app = express();
 
 app.use(requestId);
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
+app.use(
+  cors({
+    origin: (incomingOrigin, callback) => {
+      // Allow server-to-server requests (no Origin header) and allowed origins.
+      // Also allow any *.onrender.com subdomain so Render preview URLs work.
+      if (
+        !incomingOrigin ||
+        ALLOWED_ORIGINS.includes(incomingOrigin) ||
+        incomingOrigin.endsWith(".onrender.com")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin ${incomingOrigin} not allowed`));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(logger);
 
